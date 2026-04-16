@@ -92,8 +92,8 @@ Polyglot is provided as is, without any warranty of any kind.
 == Installation ==
 
 1. Upload the plugin folder to `/wp-content/plugins/`
-2. Activate the plugin in WordPress admin
-3. Ensure Polylang is active
+2. Install and activate Polylang first
+3. Activate Polyglot in WordPress admin
 4. Open Tools > Polyglot
 5. Save Google API key in Configuration
 

@@ -25,6 +25,14 @@ if (!class_exists('Polyglot_Plugin')) {
 
 			register_activation_hook(POLYGLOT_FILE, array($this, 'activate'));
 			register_deactivation_hook(POLYGLOT_FILE, array($this, 'deactivate'));
+			add_action('plugins_loaded', array($this, 'bootstrap'), 20);
+		}
+
+		public function bootstrap(): void {
+			if (!$this->translation_service->is_polylang_ready()) {
+				add_action('admin_notices', array($this, 'render_missing_polylang_notice'));
+				return;
+			}
 
 			add_action('admin_menu', array($this, 'register_admin_page'));
 			add_action('admin_init', array($this, 'handle_admin_post'));
@@ -35,7 +43,26 @@ if (!class_exists('Polyglot_Plugin')) {
 			add_action(self::CRON_HOOK, array($this, 'process_job_batch'));
 		}
 
-		public function activate(): void {}
+		public function activate(): void {
+			if ($this->translation_service->is_polylang_ready()) {
+				return;
+			}
+
+			if (!function_exists('deactivate_plugins')) {
+				require_once ABSPATH . 'wp-admin/includes/plugin.php';
+			}
+
+			deactivate_plugins(plugin_basename(POLYGLOT_FILE));
+
+			wp_die(
+				esc_html__('Polyglot requires Polylang to be installed and active before activation.', 'polyglot'),
+				esc_html__('Plugin dependency missing', 'polyglot'),
+				array(
+					'response' => 200,
+					'back_link' => true,
+				)
+			);
+		}
 
 		public function deactivate(): void {
 			wp_clear_scheduled_hook(self::CRON_HOOK);
@@ -49,6 +76,18 @@ if (!class_exists('Polyglot_Plugin')) {
 				self::MENU_SLUG,
 				array($this->admin_page, 'render')
 			);
+		}
+
+		public function render_missing_polylang_notice(): void {
+			if (!current_user_can('activate_plugins')) {
+				return;
+			}
+
+			?>
+			<div class="notice notice-error">
+				<p><?php esc_html_e('Polyglot requires Polylang. Please install and activate Polylang first.', 'polyglot'); ?></p>
+			</div>
+			<?php
 		}
 
 		public function handle_admin_post(): void {
