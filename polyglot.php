@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Polyglot
  * Description: Fills missing Polylang String Translation values using Google Cloud Translation API (Basic v2). Does not translate posts/pages.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Simone Ricci
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html

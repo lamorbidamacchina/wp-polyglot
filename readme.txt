@@ -1,10 +1,10 @@
 === Polyglot ===
 Contributors: Simone Ricci
-Tags: polylang, translation, i18n, localization, google cloud, google translate
+Tags: polylang, translation, localization, google translate, multilingual
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -110,6 +110,11 @@ No. It only works on already existing Polylang-linked target posts.
 Google Cloud Translation API Basic (v2), authenticated via API key.
 
 == Changelog ==
+
+= 1.1.0 =
+
+- Compliance hardening and plugin-check fixes for nonce/input handling and translation-service SQL safety
+- Improved readme metadata for WordPress.org checks
 
 = 1.0.0 =
 

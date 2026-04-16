@@ -428,13 +428,37 @@ if (!class_exists('Polyglot_Translation_Service')) {
 
 			$items = array();
 			foreach ($candidates as $table_name) {
-				$escaped_table = esc_sql($table_name);
-				$table_exists = $wpdb->get_var("SHOW TABLES LIKE '{$escaped_table}'");
+				$cache_group = 'polyglot_translation_service';
+				$table_cache_key = 'table_exists_' . md5($table_name);
+				$table_exists = wp_cache_get($table_cache_key, $cache_group);
+				if (!is_string($table_exists)) {
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Schema introspection query, cached via wp_cache_set() below.
+					$table_exists = (string) $wpdb->get_var(
+						$wpdb->prepare(
+							'SHOW TABLES LIKE %s',
+							$table_name
+						)
+					);
+					wp_cache_set($table_cache_key, $table_exists, $cache_group, 600);
+				}
 				if ($table_exists !== $table_name) {
 					continue;
 				}
 
-				$columns_rows = $wpdb->get_results("SHOW COLUMNS FROM `{$table_name}`", ARRAY_A);
+				if (!$this->is_safe_sql_identifier($table_name)) {
+					continue;
+				}
+
+				$columns_cache_key = 'table_columns_' . md5($table_name);
+				$columns_rows = wp_cache_get($columns_cache_key, $cache_group);
+				if (!is_array($columns_rows)) {
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name is validated and schema read is cached below.
+					$columns_rows = $wpdb->get_results("SHOW COLUMNS FROM `{$table_name}`", ARRAY_A);
+					if (!is_array($columns_rows)) {
+						$columns_rows = array();
+					}
+					wp_cache_set($columns_cache_key, $columns_rows, $cache_group, 600);
+				}
 				if (!is_array($columns_rows) || empty($columns_rows)) {
 					continue;
 				}
@@ -446,37 +470,71 @@ if (!class_exists('Polyglot_Translation_Service')) {
 					}
 				}
 
-				$context_col = $this->pick_first_existing_column($columns, array('context', 'domain', 'group_name', 'grp'));
-				$name_col = $this->pick_first_existing_column($columns, array('name', 'title', 'slug'));
-				$string_col = $this->pick_first_existing_column($columns, array('string', 'value', 'original', 'text'));
+				$available_columns = array_fill_keys($columns, true);
+				$context_candidates = array('context', 'domain', 'group_name', 'grp');
+				$name_candidates = array('name', 'title', 'slug');
+				$string_candidates = array('string', 'value', 'original', 'text');
 
-				if ($name_col === '' || $string_col === '') {
+				$has_name_column = false;
+				foreach ($name_candidates as $candidate_column) {
+					if (isset($available_columns[$candidate_column])) {
+						$has_name_column = true;
+						break;
+					}
+				}
+
+				$has_string_column = false;
+				foreach ($string_candidates as $candidate_column) {
+					if (isset($available_columns[$candidate_column])) {
+						$has_string_column = true;
+						break;
+					}
+				}
+
+				if (!$has_name_column || !$has_string_column) {
 					continue;
 				}
-
-				$select_parts = array();
-				if ($context_col !== '') {
-					$select_parts[] = "`{$context_col}` AS context";
-				} else {
-					$select_parts[] = "'' AS context";
-				}
-				$select_parts[] = "`{$name_col}` AS name";
-				$select_parts[] = "`{$string_col}` AS string";
-				$query = "SELECT " . implode(', ', $select_parts) . " FROM `{$table_name}`";
-				$rows = $wpdb->get_results($query, ARRAY_A);
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Identifiers are selected from strict allowlists and this fallback source is intentionally queried directly.
+				$rows = $wpdb->get_results(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is constrained to known candidates and validated identifier.
+					"SELECT * FROM `{$table_name}`",
+					ARRAY_A
+				);
 				if (!is_array($rows) || empty($rows)) {
 					continue;
 				}
 
 				foreach ($rows as $row) {
-					$source = isset($row['string']) ? (string) $row['string'] : '';
+					$source = '';
+					foreach ($string_candidates as $candidate_column) {
+						if (isset($row[$candidate_column])) {
+							$source = (string) $row[$candidate_column];
+							break;
+						}
+					}
 					if ($source === '') {
 						continue;
 					}
 
+					$name = '';
+					foreach ($name_candidates as $candidate_column) {
+						if (isset($row[$candidate_column])) {
+							$name = (string) $row[$candidate_column];
+							break;
+						}
+					}
+
+					$context = '';
+					foreach ($context_candidates as $candidate_column) {
+						if (isset($row[$candidate_column])) {
+							$context = (string) $row[$candidate_column];
+							break;
+						}
+					}
+
 					$items[] = array(
-						'context' => isset($row['context']) ? (string) $row['context'] : '',
-						'name' => isset($row['name']) && (string) $row['name'] !== '' ? (string) $row['name'] : $source,
+						'context' => $context,
+						'name' => $name !== '' ? $name : $source,
 						'string' => $source,
 					);
 				}
@@ -485,14 +543,12 @@ if (!class_exists('Polyglot_Translation_Service')) {
 			return $items;
 		}
 
-		private function pick_first_existing_column(array $columns, array $candidates): string {
-			foreach ($candidates as $candidate) {
-				if (in_array($candidate, $columns, true)) {
-					return $candidate;
-				}
+		private function is_safe_sql_identifier(string $identifier): bool {
+			if ($identifier === '') {
+				return false;
 			}
 
-			return '';
+			return (bool) preg_match('/^[A-Za-z0-9_]+$/', $identifier);
 		}
 
 		private function build_string_key(array $item): string {
@@ -657,7 +713,6 @@ if (!class_exists('Polyglot_Translation_Service')) {
 					'posts_per_page' => -1,
 					'fields' => 'ids',
 					'no_found_rows' => true,
-					'suppress_filters' => true,
 				)
 			);
 

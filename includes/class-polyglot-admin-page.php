@@ -101,6 +101,7 @@ if (!class_exists('Polyglot_Admin_Page')) {
 		}
 
 		private function get_current_tab(): string {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only tab navigation from query string; no state mutation.
 			$tab = isset($_GET['tab']) ? sanitize_key((string) wp_unslash($_GET['tab'])) : 'configuration';
 			$allowed_tabs = array('configuration', 'translation-strings', 'pages-posts-cpt');
 			if (!in_array($tab, $allowed_tabs, true)) {
@@ -240,18 +241,6 @@ if (!class_exists('Polyglot_Admin_Page')) {
 										<?php echo esc_html($label); ?>
 									</label>
 								<?php endforeach; ?>
-							</td>
-						</tr>
-						<tr>
-							<th scope="row"><?php esc_html_e('Confirm Custom Fields', 'polyglot'); ?></th>
-							<td>
-								<label>
-									<input type="checkbox" name="polyglot_confirm_meta_translation" value="1" />
-									<?php esc_html_e('I confirm translating detected custom fields for the selected content type.', 'polyglot'); ?>
-								</label>
-								<p class="description">
-									<?php esc_html_e('On first submit, Polyglot lists custom fields it detected. Check this box and submit again to confirm.', 'polyglot'); ?>
-								</p>
 							</td>
 						</tr>
 					</table>

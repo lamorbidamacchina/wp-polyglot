@@ -65,8 +65,10 @@ if (!class_exists('Polyglot_Plugin')) {
 				return;
 			}
 
+			// Nonce gate for all admin form POST reads in this request lifecycle.
 			check_admin_referer('polyglot_form', 'polyglot_nonce');
 
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_admin_post() above.
 			$action = sanitize_key((string) wp_unslash($_POST['polyglot_action']));
 			$tab = $this->get_posted_tab();
 
@@ -80,6 +82,7 @@ if (!class_exists('Polyglot_Plugin')) {
 		}
 
 		private function save_api_key(string $tab): void {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_admin_post().
 			$api_key = isset($_POST['polyglot_api_key']) ? sanitize_text_field((string) wp_unslash($_POST['polyglot_api_key'])) : '';
 			if ($api_key === '') {
 				update_option(self::OPTION_API_KEY, '', false);
@@ -110,10 +113,11 @@ if (!class_exists('Polyglot_Plugin')) {
 				$this->redirect_to_page($tab);
 			}
 
+			// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_admin_post().
 			$group = isset($_POST['polyglot_group']) ? sanitize_text_field((string) wp_unslash($_POST['polyglot_group'])) : '';
 			$source_language = isset($_POST['polyglot_source_language']) ? sanitize_key((string) wp_unslash($_POST['polyglot_source_language'])) : '';
-			$target_languages = isset($_POST['polyglot_languages']) ? (array) wp_unslash($_POST['polyglot_languages']) : array();
-			$target_languages = array_values(array_filter(array_map('sanitize_key', $target_languages)));
+			$target_languages = $this->get_posted_sanitized_key_array('polyglot_languages');
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
 			$target_languages = array_values(array_unique(array_diff($target_languages, array($source_language))));
 
 			if ($group === '' || $source_language === '' || empty($target_languages)) {
@@ -161,11 +165,12 @@ if (!class_exists('Polyglot_Plugin')) {
 				$this->redirect_to_page($tab);
 			}
 
+			// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_admin_post().
 			$content_type = isset($_POST['polyglot_content_type']) ? sanitize_key((string) wp_unslash($_POST['polyglot_content_type'])) : '';
 			$source_language = isset($_POST['polyglot_content_source_language']) ? sanitize_key((string) wp_unslash($_POST['polyglot_content_source_language'])) : '';
 			$content_scope = isset($_POST['polyglot_content_scope']) ? sanitize_key((string) wp_unslash($_POST['polyglot_content_scope'])) : 'default_only';
-			$target_languages = isset($_POST['polyglot_content_languages']) ? (array) wp_unslash($_POST['polyglot_content_languages']) : array();
-			$target_languages = array_values(array_filter(array_map('sanitize_key', $target_languages)));
+			$target_languages = $this->get_posted_sanitized_key_array('polyglot_content_languages');
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
 			$target_languages = array_values(array_unique(array_diff($target_languages, array($source_language))));
 
 			$allowed_content_types = $this->get_allowed_content_types();
@@ -180,6 +185,7 @@ if (!class_exists('Polyglot_Plugin')) {
 			$queue = isset($queue_data['queue']) && is_array($queue_data['queue']) ? $queue_data['queue'] : array();
 			$scanned = isset($queue_data['scanned']) ? (int) $queue_data['scanned'] : 0;
 			$meta_keys = isset($queue_data['meta_keys']) && is_array($queue_data['meta_keys']) ? $queue_data['meta_keys'] : array();
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_admin_post().
 			$confirm_meta_translation = isset($_POST['polyglot_confirm_meta_translation']) ? sanitize_key((string) wp_unslash($_POST['polyglot_confirm_meta_translation'])) : '';
 
 			if (empty($queue)) {
@@ -270,12 +276,36 @@ if (!class_exists('Polyglot_Plugin')) {
 		}
 
 		private function get_posted_tab(): string {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_admin_post().
 			$tab = isset($_POST['polyglot_tab']) ? sanitize_key((string) wp_unslash($_POST['polyglot_tab'])) : 'configuration';
 			if (!in_array($tab, array('configuration', 'translation-strings', 'pages-posts-cpt'), true)) {
 				return 'configuration';
 			}
 
 			return $tab;
+		}
+
+		private function get_posted_sanitized_key_array(string $field): array {
+			$values = filter_input(INPUT_POST, $field, FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
+			if (!is_array($values)) {
+				return array();
+			}
+
+			$result = array();
+			foreach ($values as $value) {
+				if (!is_scalar($value)) {
+					continue;
+				}
+
+				$sanitized = sanitize_key((string) $value);
+				if ($sanitized === '') {
+					continue;
+				}
+
+				$result[] = $sanitized;
+			}
+
+			return array_values(array_unique($result));
 		}
 
 		private function set_notice(string $type, string $message): void {
@@ -434,10 +464,11 @@ if (!class_exists('Polyglot_Plugin')) {
 
 			check_ajax_referer('polyglot_status', 'nonce');
 
+			// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verified via check_ajax_referer() above.
 			$content_type = isset($_POST['content_type']) ? sanitize_key((string) wp_unslash($_POST['content_type'])) : '';
 			$source_language = isset($_POST['source_language']) ? sanitize_key((string) wp_unslash($_POST['source_language'])) : '';
-			$target_languages = isset($_POST['target_languages']) ? (array) wp_unslash($_POST['target_languages']) : array();
-			$target_languages = array_values(array_filter(array_map('sanitize_key', $target_languages)));
+			$target_languages = $this->get_posted_sanitized_key_array('target_languages');
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
 			$target_languages = array_values(array_unique(array_diff($target_languages, array($source_language))));
 
 			$allowed_content_types = $this->get_allowed_content_types();

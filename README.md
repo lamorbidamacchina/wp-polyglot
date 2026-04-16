@@ -117,6 +117,11 @@ Google Cloud Translation API Basic (v2), authenticated via API key.
 
 ## Changelog
 
+### 1.1.0
+
+- Compliance hardening and plugin-check fixes for nonce/input handling and translation-service SQL safety
+- Improved readme metadata for WordPress.org checks
+
 ### 1.0.0
 
 - Initial release
