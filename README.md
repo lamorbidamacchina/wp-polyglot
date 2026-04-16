@@ -11,6 +11,8 @@ Polyglot helps administrators run controlled translation jobs from `Tools > Poly
 
 The plugin is designed for safe, incremental translation workflows and does not create missing translated posts.
 
+Polyglot is built for projects that use WordPress as a CMS with a clear separation between content and presentation (for example, headless WordPress setups). It is not recommended for page-builder-heavy workflows (such as Elementor) where content and presentation are tightly coupled.
+
 ## Requirements
 
 - WordPress 5.8+
@@ -114,6 +116,19 @@ No. It only works on already existing Polylang-linked target posts.
 ### Which API is used?
 
 Google Cloud Translation API Basic (v2), authenticated via API key.
+
+### How do I get a Google API key for Translation?
+
+1. Go to Google Cloud Console and create (or select) a project.
+2. Enable billing for that project.
+3. Enable the Cloud Translation API.
+4. Open **APIs & Services > Credentials** and create an API key.
+5. Copy the key into `Tools > Polyglot > Configuration`.
+
+For security, restrict the API key in Google Cloud:
+
+- **API restrictions**: allow only Cloud Translation API.
+- **Application restrictions**: limit usage to your required domains/referrers (or server IPs, based on your setup).
 
 ## Changelog
 
