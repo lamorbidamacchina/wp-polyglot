@@ -1,0 +1,55 @@
+# Project tooling
+.DS_Store
+Thumbs.db
+
+# IDE/editor settings
+.idea/
+.vscode/*
+.cursor/
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+
+# Logs and debugging
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+debug.log
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# Dependency directories
+node_modules/
+vendor/
+
+# Build artifacts
+dist/
+build/
+coverage/
+*.map
+
+# Archives and release packages
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
+# Runtime/cache files
+.cache/
+tmp/
+temp/
+
+# Testing artifacts
+phpunit.xml
+phpunit.xml.dist.local
+.phpunit.result.cache

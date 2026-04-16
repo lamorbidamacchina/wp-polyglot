@@ -1,0 +1,30 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Polyglot 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-15 00:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Domain: polyglot\n"
+
+#: includes/class-polyglot-plugin.php
+msgid "Polyglot"
+msgstr ""
+
+#: includes/class-polyglot-admin-page.php
+msgid "This tool only translates entries in Polylang String Translations. It does not translate posts, pages, or other WordPress objects."
+msgstr ""
+
+#: includes/class-polyglot-plugin.php
+msgid "API key saved."
+msgstr ""
+
+#: includes/class-polyglot-plugin.php
+msgid "Translation job queued. Processing will continue in background."
+msgstr ""
