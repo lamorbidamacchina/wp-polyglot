@@ -70,8 +70,8 @@ if (!class_exists('Polyglot_Plugin')) {
 
 		public function register_admin_page(): void {
 			add_management_page(
-				__('Polyglot', 'polyglot'),
-				__('Polyglot', 'polyglot'),
+				__('Polyglot for Polylang', 'polyglot'),
+				__('Polyglot for Polylang', 'polyglot'),
 				'manage_options',
 				self::MENU_SLUG,
 				array($this->admin_page, 'render')

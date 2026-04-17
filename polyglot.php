@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Polyglot
+ * Plugin Name: Polyglot for Polylang
  * Description: Fills missing Polylang String Translation values using Google Cloud Translation API (Basic v2). Does not translate posts/pages.
  * Version: 1.1.0
  * Author: Simone Ricci

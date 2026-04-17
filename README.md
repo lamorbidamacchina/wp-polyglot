@@ -1,10 +1,10 @@
-# Polyglot
+# Polyglot for Polylang
 
 Automatically translate Polylang content using Google Cloud Translation API (Basic v2).
 
 ## Plugin Overview
 
-Polyglot helps administrators run controlled translation jobs from `Tools > Polyglot` for:
+Polyglot for Polylang helps administrators run controlled translation jobs from `Tools > Polyglot for Polylang` for:
 
 - **Polylang String Translations**
 - **Pages, Posts, and public Custom Post Types (CPTs)**
@@ -112,6 +112,12 @@ No. It only translates fields that appear untranslated by its detection rules.
 ### Does Polyglot create missing translated posts?
 
 No. It only works on already existing Polylang-linked target posts.
+
+### Who can run translation jobs?
+
+By default, only Administrators can access and run Polyglot jobs.
+
+If your site customizes roles/capabilities and grants `manage_options` to Editors (or another role), those users can run jobs too.
 
 ### Which API is used?
 

@@ -1,4 +1,4 @@
-=== Polyglot ===
+=== Polyglot for Polylang ===
 Contributors: Simone Ricci
 Tags: polylang, translation, localization, google translate, multilingual
 Requires at least: 5.8
@@ -106,6 +106,12 @@ No. It only translates fields that appear untranslated by its detection rules.
 = Does Polyglot create missing translated posts? =
 
 No. It only works on already existing Polylang-linked target posts.
+
+= Who can run translation jobs? =
+
+By default, only Administrators can access and run Polyglot jobs.
+
+If your site customizes roles/capabilities and grants `manage_options` to Editors (or another role), those users can run jobs too.
 
 = Which API is used? =
 

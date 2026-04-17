@@ -79,7 +79,7 @@ if (!class_exists('Polyglot_Admin_Page')) {
 			delete_option(Polyglot_Plugin::OPTION_NOTICE);
 			?>
 			<div class="wrap">
-				<h1><?php esc_html_e('Polyglot', 'polyglot'); ?></h1>
+				<h1><?php esc_html_e('Polyglot for Polylang', 'polyglot'); ?></h1>
 				<?php if (!empty($notice['message'])) : ?>
 					<div class="notice notice-<?php echo esc_attr($notice['type'] ?? 'info'); ?> is-dismissible"><p><?php echo esc_html((string) $notice['message']); ?></p></div>
 				<?php endif; ?>
