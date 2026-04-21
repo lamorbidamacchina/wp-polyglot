@@ -4,7 +4,7 @@ Tags: polylang, translation, localization, google translate, multilingual
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -157,6 +157,10 @@ For security, restrict the API key in Google Cloud:
 - Application restrictions: limit usage to your required domains/referrers (or server IPs, based on your setup).
 
 == Changelog ==
+
+= 1.2.0 =
+
+- Added uninstall cleanup to remove plugin options, including stored encrypted Google API key, job state, and admin notice data
 
 = 1.1.0 =
 

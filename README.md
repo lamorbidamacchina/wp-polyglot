@@ -164,6 +164,10 @@ For security, restrict the API key in Google Cloud:
 
 ## Changelog
 
+### 1.2.0
+
+- Added uninstall cleanup to remove plugin options, including stored encrypted Google API key, job state, and admin notice data
+
 ### 1.1.0
 
 - Compliance hardening and plugin-check fixes for nonce/input handling and translation-service SQL safety
