@@ -116,6 +116,8 @@ if (!class_exists('Polyglot_Plugin')) {
 
 			if ($action === 'save_api_key') {
 				$this->save_api_key($tab);
+			} elseif ($action === 'test_api_key') {
+				$this->test_api_key($tab);
 			} elseif ($action === 'start_translation') {
 				$this->start_translation_job($tab);
 			} elseif ($action === 'start_content_translation') {
@@ -126,9 +128,15 @@ if (!class_exists('Polyglot_Plugin')) {
 		private function save_api_key(string $tab): void {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in handle_admin_post().
 			$api_key = isset($_POST['polyglot_api_key']) ? sanitize_text_field((string) wp_unslash($_POST['polyglot_api_key'])) : '';
+			$api_key = preg_replace('/\s+/', '', $api_key);
 			if ($api_key === '') {
 				update_option(self::OPTION_API_KEY, '', false);
 				$this->set_notice('success', __('API key cleared.', 'polyglot'));
+				$this->redirect_to_page($tab);
+			}
+
+			if (!$this->is_likely_google_api_key($api_key)) {
+				$this->set_notice('error', __('The API key format looks invalid. Paste the full Google API key (usually starts with "AIza").', 'polyglot'));
 				$this->redirect_to_page($tab);
 			}
 
@@ -193,6 +201,35 @@ if (!class_exists('Polyglot_Plugin')) {
 			);
 
 			$this->queue_job_and_redirect($job, $tab, __('Translation job queued. Processing will continue in background.', 'polyglot'));
+		}
+
+		private function test_api_key(string $tab): void {
+			$api_key = $this->get_api_key();
+			if ($api_key === '') {
+				$this->set_notice('error', __('No API key is saved. Save a key first, then run the test.', 'polyglot'));
+				$this->redirect_to_page($tab);
+			}
+
+			if (!$this->is_likely_google_api_key($api_key)) {
+				$this->set_notice('error', __('Stored API key format is invalid. Re-save the key in Configuration and test again.', 'polyglot'));
+				$this->redirect_to_page($tab);
+			}
+
+			$check = $this->translation_service->validate_api_key($api_key);
+			if (is_wp_error($check)) {
+				$this->set_notice(
+					'error',
+					sprintf(
+						/* translators: %s: provider error message */
+						__('API key test failed: %s', 'polyglot'),
+						$check->get_error_message()
+					)
+				);
+				$this->redirect_to_page($tab);
+			}
+
+			$this->set_notice('success', __('API key test passed. Google Cloud Translation API is reachable with the current saved key.', 'polyglot'));
+			$this->redirect_to_page($tab);
 		}
 
 		private function start_content_translation_job(string $tab): void {
@@ -290,6 +327,12 @@ if (!class_exists('Polyglot_Plugin')) {
 				if ($api_key === '') {
 					$job['status'] = 'failed';
 					$job['last_error'] = __('Missing Google API key.', 'polyglot');
+					update_option(self::OPTION_JOB, $job, false);
+					return;
+				}
+				if (!$this->is_likely_google_api_key($api_key)) {
+					$job['status'] = 'failed';
+					$job['last_error'] = __('Stored Google API key could not be validated. Re-save the API key in the Configuration tab (this can happen after site migrations or auth salt changes).', 'polyglot');
 					update_option(self::OPTION_JOB, $job, false);
 					return;
 				}
@@ -560,6 +603,15 @@ if (!class_exists('Polyglot_Plugin')) {
 				update_option(self::OPTION_API_KEY, $encrypted_plaintext, false);
 			}
 			return $stored_value;
+		}
+
+		private function is_likely_google_api_key(string $api_key): bool {
+			$api_key = trim($api_key);
+			if ($api_key === '') {
+				return false;
+			}
+
+			return (bool) preg_match('/^AIza[0-9A-Za-z_-]{20,}$/', $api_key);
 		}
 
 		private function encrypt_api_key(string $api_key): string {

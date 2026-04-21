@@ -57,6 +57,7 @@ if (!class_exists('Polyglot_Admin_Page')) {
 						'failed' => (int) ($totals['failed'] ?? 0),
 					),
 					'last_error' => isset($job['last_error']) ? (string) $job['last_error'] : '',
+					'errors' => $this->format_job_errors(isset($job['errors']) && is_array($job['errors']) ? $job['errors'] : array()),
 				)
 			);
 		}
@@ -186,11 +187,22 @@ if (!class_exists('Polyglot_Admin_Page')) {
 					</table>
 					<?php submit_button(__('Save API Key', 'polyglot')); ?>
 				</form>
+				<hr style="margin: 18px 0;" />
+				<form method="post" action="">
+					<?php wp_nonce_field('polyglot_form', 'polyglot_nonce'); ?>
+					<input type="hidden" name="polyglot_action" value="test_api_key" />
+					<input type="hidden" name="polyglot_tab" value="configuration" />
+					<p class="description" style="margin-top:0;">
+						<?php esc_html_e('Run a live check against Google Cloud Translation API using the currently saved key.', 'polyglot'); ?>
+					</p>
+					<?php submit_button(__('Test Saved API Key', 'polyglot'), 'secondary', 'submit', false); ?>
+				</form>
 			</div>
 			<?php
 		}
 
 		private function render_translation_strings_tab(array $languages, array $groups, array $job): void {
+			$formatted_errors = $this->format_job_errors(isset($job['errors']) && is_array($job['errors']) ? $job['errors'] : array());
 			$default_source_language = '';
 			if (function_exists('pll_default_language')) {
 				$default_source_language = (string) pll_default_language('slug');
@@ -262,6 +274,15 @@ if (!class_exists('Polyglot_Admin_Page')) {
 						<p><strong><?php esc_html_e('Skipped:', 'polyglot'); ?></strong> <span id="polyglot-skipped"><?php echo esc_html((string) ((int) ($job['totals']['skipped'] ?? 0))); ?></span></p>
 						<p><strong><?php esc_html_e('Failed:', 'polyglot'); ?></strong> <span id="polyglot-failed"><?php echo esc_html((string) ((int) ($job['totals']['failed'] ?? 0))); ?></span></p>
 						<p style="color:#b32d2e;" id="polyglot-last-error"><?php echo esc_html((string) ($job['last_error'] ?? '')); ?></p>
+						<div id="polyglot-errors-panel" style="<?php echo empty($formatted_errors) ? 'display:none;' : ''; ?> margin-top: 12px;">
+							<p><strong><?php esc_html_e('Failure details', 'polyglot'); ?></strong></p>
+							<ol id="polyglot-errors-list" style="margin: 8px 0 0 18px;">
+								<?php foreach ($formatted_errors as $error_item) : ?>
+									<li><?php echo esc_html($error_item); ?></li>
+								<?php endforeach; ?>
+							</ol>
+							<p class="description"><?php esc_html_e('Tip: you can inspect full raw payload with WP-CLI: wp option get polyglot_translation_job --format=json', 'polyglot'); ?></p>
+						</div>
 					<?php else : ?>
 						<p><?php esc_html_e('No translation job started yet.', 'polyglot'); ?></p>
 					<?php endif; ?>
@@ -313,6 +334,30 @@ if (!class_exists('Polyglot_Admin_Page')) {
 						}
 					}
 
+					function setErrorDetails(errors) {
+						var panel = document.getElementById('polyglot-errors-panel');
+						var list = document.getElementById('polyglot-errors-list');
+						if (!panel || !list) {
+							return;
+						}
+
+						while (list.firstChild) {
+							list.removeChild(list.firstChild);
+						}
+
+						if (!Array.isArray(errors) || errors.length === 0) {
+							panel.style.display = 'none';
+							return;
+						}
+
+						errors.forEach(function(item) {
+							var li = document.createElement('li');
+							li.textContent = String(item || '');
+							list.appendChild(li);
+						});
+						panel.style.display = 'block';
+					}
+
 					function refreshStatus() {
 						var body = new URLSearchParams();
 						body.append('action', 'polyglot_job_status');
@@ -340,6 +385,7 @@ if (!class_exists('Polyglot_Admin_Page')) {
 								setText('polyglot-skipped', totals.skipped || 0);
 								setText('polyglot-failed', totals.failed || 0);
 								setText('polyglot-last-error', response.data.last_error || '');
+								setErrorDetails(response.data.errors || []);
 							})
 							.catch(function() {
 								// Ignore polling errors; next interval will retry.
@@ -355,6 +401,7 @@ if (!class_exists('Polyglot_Admin_Page')) {
 		}
 
 		private function render_pages_posts_cpt_tab(array $languages, array $job): void {
+			$formatted_errors = $this->format_job_errors(isset($job['errors']) && is_array($job['errors']) ? $job['errors'] : array());
 			$post_type_options = $this->get_post_type_options();
 			$default_source_language = '';
 			if (function_exists('pll_default_language')) {
@@ -457,6 +504,18 @@ if (!class_exists('Polyglot_Admin_Page')) {
 						<p><strong><?php esc_html_e('Skipped:', 'polyglot'); ?></strong> <span id="polyglot-content-skipped"><?php echo esc_html((string) ((int) ($job['totals']['skipped'] ?? 0))); ?></span></p>
 						<p><strong><?php esc_html_e('Failed:', 'polyglot'); ?></strong> <span id="polyglot-content-failed"><?php echo esc_html((string) ((int) ($job['totals']['failed'] ?? 0))); ?></span></p>
 						<p style="color:#b32d2e;" id="polyglot-content-last-error"><?php echo esc_html((string) ($job['last_error'] ?? '')); ?></p>
+						<div id="polyglot-content-errors-panel" style="<?php echo empty($formatted_errors) ? 'display:none;' : ''; ?> margin-top: 12px;">
+							<p><strong><?php esc_html_e('Failure details', 'polyglot'); ?></strong></p>
+							<ol id="polyglot-content-errors-list" style="margin: 8px 0 0 18px;">
+								<?php foreach ($formatted_errors as $error_item) : ?>
+									<li><?php echo esc_html($error_item); ?></li>
+								<?php endforeach; ?>
+							</ol>
+							<div id="polyglot-content-error-guidance" class="notice notice-warning inline" style="margin: 10px 0 0;">
+								<p><?php esc_html_e('If failures mention API access, verify API key restrictions, billing, and that Cloud Translation API is enabled for the same project.', 'polyglot'); ?></p>
+							</div>
+							<p class="description"><?php esc_html_e('Tip: you can inspect full raw payload with WP-CLI: wp option get polyglot_translation_job --format=json', 'polyglot'); ?></p>
+						</div>
 					<?php else : ?>
 						<p><?php esc_html_e('No content translation job started yet.', 'polyglot'); ?></p>
 					<?php endif; ?>
@@ -622,6 +681,30 @@ if (!class_exists('Polyglot_Admin_Page')) {
 						}
 					}
 
+					function setErrorDetails(errors) {
+						var panel = document.getElementById('polyglot-content-errors-panel');
+						var list = document.getElementById('polyglot-content-errors-list');
+						if (!panel || !list) {
+							return;
+						}
+
+						while (list.firstChild) {
+							list.removeChild(list.firstChild);
+						}
+
+						if (!Array.isArray(errors) || errors.length === 0) {
+							panel.style.display = 'none';
+							return;
+						}
+
+						errors.forEach(function(item) {
+							var li = document.createElement('li');
+							li.textContent = String(item || '');
+							list.appendChild(li);
+						});
+						panel.style.display = 'block';
+					}
+
 					function refreshStatus() {
 						var body = new URLSearchParams();
 						body.append('action', 'polyglot_job_status');
@@ -651,6 +734,7 @@ if (!class_exists('Polyglot_Admin_Page')) {
 								setText('polyglot-content-skipped', totals.skipped || 0);
 								setText('polyglot-content-failed', totals.failed || 0);
 								setText('polyglot-content-last-error', response.data.last_error || '');
+								setErrorDetails(response.data.errors || []);
 							})
 							.catch(function() {
 								// Ignore polling errors; next interval will retry.
@@ -690,6 +774,87 @@ if (!class_exists('Polyglot_Admin_Page')) {
 			}
 
 			return $options;
+		}
+
+		private function format_job_errors(array $errors): array {
+			$messages = array();
+			foreach ($errors as $error) {
+				if (!is_array($error)) {
+					continue;
+				}
+
+				$message = isset($error['message']) ? trim((string) $error['message']) : '';
+				if ($message === '') {
+					$message = __('Unknown translation error.', 'polyglot');
+				}
+
+				$language = isset($error['language']) ? trim((string) $error['language']) : '';
+				$field_key = isset($error['field_key']) ? trim((string) $error['field_key']) : '';
+				$name = isset($error['name']) ? trim((string) $error['name']) : '';
+				$source_post_id = isset($error['source_post_id']) ? (int) $error['source_post_id'] : 0;
+				$target_post_id = isset($error['target_post_id']) ? (int) $error['target_post_id'] : 0;
+				$kind = $this->classify_error_message($message);
+
+				$parts = array();
+				if ($kind !== '') {
+					$parts[] = '[' . strtoupper($kind) . ']';
+				}
+				$parts[] = $message;
+
+				if ($name !== '') {
+					$parts[] = sprintf(__('name: %s', 'polyglot'), $name);
+				}
+				if ($field_key !== '') {
+					$parts[] = sprintf(__('field: %s', 'polyglot'), $field_key);
+				}
+				if ($language !== '') {
+					$parts[] = sprintf(__('lang: %s', 'polyglot'), $language);
+				}
+				if ($source_post_id > 0 || $target_post_id > 0) {
+					$parts[] = sprintf(__('source/target: %1$d/%2$d', 'polyglot'), $source_post_id, $target_post_id);
+				}
+
+				$messages[] = implode(' | ', $parts);
+			}
+
+			return $messages;
+		}
+
+		private function classify_error_message(string $message): string {
+			$normalized = strtolower($message);
+			$api_markers = array(
+				'permission_denied',
+				'request_denied',
+				'invalid argument',
+				'api key',
+				'quota',
+				'billing',
+				'google',
+				'unauthenticated',
+				'forbidden',
+				'429',
+			);
+			foreach ($api_markers as $marker) {
+				if (strpos($normalized, $marker) !== false) {
+					return 'api';
+				}
+			}
+
+			$save_markers = array(
+				'wp_update_post',
+				'update_post_meta',
+				'unsupported',
+				'invalid content translation task payload',
+				'could not save',
+				'save error',
+			);
+			foreach ($save_markers as $marker) {
+				if (strpos($normalized, $marker) !== false) {
+					return 'save';
+				}
+			}
+
+			return 'other';
 		}
 	}
 }

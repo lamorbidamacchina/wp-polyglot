@@ -73,6 +73,32 @@ Default excluded keys currently include:
 - Progress view includes status, remaining, scanned, translatable, translated, skipped, failed, and last error
 - If no eligible fields are found, Polyglot shows a success notice and does not start a queue
 
+= Troubleshooting failed jobs =
+
+If a job ends with done_with_errors, open the Job Progress panel and review the Failure details list.
+Each row includes:
+
+- Error category ([API], [SAVE], [OTHER])
+- Error message
+- Related identifiers (field key, language, post IDs, or string name)
+
+To inspect raw job data directly:
+
+- wp option get polyglot_translation_job --format=json
+
+Key fields:
+
+- status
+- last_error
+- totals.failed
+- errors[]
+
+If errors are API-related, verify:
+
+- Cloud Translation API is enabled in the same Google Cloud project used by the key
+- Billing is enabled for that project
+- API key restrictions allow this WordPress instance (referrer/IP restrictions and API restriction to Cloud Translation API)
+
 = Important billing notice =
 
 Google Cloud Translation API is a paid service with usage-based pricing.

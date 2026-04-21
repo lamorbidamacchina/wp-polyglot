@@ -65,14 +65,18 @@ if (!class_exists('Polyglot_Translation_Service')) {
 		}
 
 		public function translate_text(string $text, string $source_language, string $target_language, string $api_key) {
-			$endpoint = 'https://translation.googleapis.com/language/translate/v2';
+			$endpoint = add_query_arg(
+				array(
+					'key' => $api_key,
+				),
+				'https://translation.googleapis.com/language/translate/v2'
+			);
 			$response = wp_remote_post(
 				$endpoint,
 				array(
 					'timeout' => 20,
 					'headers' => array(
 						'Content-Type' => 'application/json; charset=utf-8',
-						'X-Goog-Api-Key' => $api_key,
 						'Referer' => home_url('/'),
 					),
 					'body' => wp_json_encode(
@@ -101,6 +105,49 @@ if (!class_exists('Polyglot_Translation_Service')) {
 
 			$translated = isset($data['data']['translations'][0]['translatedText']) ? (string) $data['data']['translations'][0]['translatedText'] : '';
 			return wp_kses_post(html_entity_decode($translated, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+		}
+
+		public function validate_api_key(string $api_key) {
+			$api_key = trim($api_key);
+			if ($api_key === '') {
+				return new WP_Error('missing_api_key', __('Missing API key.', 'polyglot'));
+			}
+
+			$endpoint = add_query_arg(
+				array(
+					'key' => $api_key,
+				),
+				'https://translation.googleapis.com/language/translate/v2/languages'
+			);
+			$response = wp_remote_get(
+				$endpoint,
+				array(
+					'timeout' => 20,
+					'headers' => array(
+						'Accept' => 'application/json',
+						'Referer' => home_url('/'),
+					),
+				)
+			);
+			if (is_wp_error($response)) {
+				return $response;
+			}
+
+			$status_code = (int) wp_remote_retrieve_response_code($response);
+			$body = (string) wp_remote_retrieve_body($response);
+			$data = json_decode($body, true);
+
+			if ($status_code >= 400) {
+				$message = isset($data['error']['message']) ? (string) $data['error']['message'] : __('Google API key validation failed.', 'polyglot');
+				return new WP_Error('google_api_key_validation_failed', $message);
+			}
+
+			$languages = isset($data['data']['languages']) && is_array($data['data']['languages']) ? $data['data']['languages'] : array();
+			if (empty($languages)) {
+				return new WP_Error('google_api_key_validation_unexpected_response', __('Google API key validation returned an unexpected response.', 'polyglot'));
+			}
+
+			return true;
 		}
 
 		public function get_available_languages(): array {
