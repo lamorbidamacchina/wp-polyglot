@@ -65,13 +65,14 @@ if (!class_exists('Polyglot_Translation_Service')) {
 		}
 
 		public function translate_text(string $text, string $source_language, string $target_language, string $api_key) {
-			$endpoint = add_query_arg('key', rawurlencode($api_key), 'https://translation.googleapis.com/language/translate/v2');
+			$endpoint = 'https://translation.googleapis.com/language/translate/v2';
 			$response = wp_remote_post(
 				$endpoint,
 				array(
 					'timeout' => 20,
 					'headers' => array(
 						'Content-Type' => 'application/json; charset=utf-8',
+						'X-Goog-Api-Key' => $api_key,
 						'Referer' => home_url('/'),
 					),
 					'body' => wp_json_encode(
@@ -494,43 +495,46 @@ if (!class_exists('Polyglot_Translation_Service')) {
 				if (!$has_name_column || !$has_string_column) {
 					continue;
 				}
-				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Identifiers are selected from strict allowlists and this fallback source is intentionally queried directly.
-				$rows = $wpdb->get_results(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is constrained to known candidates and validated identifier.
-					"SELECT * FROM `{$table_name}`",
-					ARRAY_A
+				$context_column = $this->resolve_existing_column($available_columns, $context_candidates);
+				$name_column = $this->resolve_existing_column($available_columns, $name_candidates);
+				$string_column = $this->resolve_existing_column($available_columns, $string_candidates);
+				if ($name_column === '' || $string_column === '') {
+					continue;
+				}
+
+				$selected_columns = array($name_column, $string_column);
+				if ($context_column !== '') {
+					$selected_columns[] = $context_column;
+				}
+
+				$quoted_columns = array();
+				foreach ($selected_columns as $selected_column) {
+					if (!$this->is_safe_sql_identifier($selected_column)) {
+						continue 2;
+					}
+					$quoted_columns[] = '`' . $selected_column . '`';
+				}
+
+				$query = sprintf(
+					'SELECT %1$s FROM `%2$s`',
+					implode(', ', $quoted_columns),
+					$table_name
 				);
+
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Identifiers are strict allowlisted/validated from table schema.
+				$rows = $wpdb->get_results($query, ARRAY_A);
 				if (!is_array($rows) || empty($rows)) {
 					continue;
 				}
 
 				foreach ($rows as $row) {
-					$source = '';
-					foreach ($string_candidates as $candidate_column) {
-						if (isset($row[$candidate_column])) {
-							$source = (string) $row[$candidate_column];
-							break;
-						}
-					}
+					$source = isset($row[$string_column]) ? (string) $row[$string_column] : '';
 					if ($source === '') {
 						continue;
 					}
 
-					$name = '';
-					foreach ($name_candidates as $candidate_column) {
-						if (isset($row[$candidate_column])) {
-							$name = (string) $row[$candidate_column];
-							break;
-						}
-					}
-
-					$context = '';
-					foreach ($context_candidates as $candidate_column) {
-						if (isset($row[$candidate_column])) {
-							$context = (string) $row[$candidate_column];
-							break;
-						}
-					}
+					$name = isset($row[$name_column]) ? (string) $row[$name_column] : '';
+					$context = $context_column !== '' && isset($row[$context_column]) ? (string) $row[$context_column] : '';
 
 					$items[] = array(
 						'context' => $context,
@@ -549,6 +553,16 @@ if (!class_exists('Polyglot_Translation_Service')) {
 			}
 
 			return (bool) preg_match('/^[A-Za-z0-9_]+$/', $identifier);
+		}
+
+		private function resolve_existing_column(array $available_columns, array $candidates): string {
+			foreach ($candidates as $candidate) {
+				if (isset($available_columns[$candidate])) {
+					return $candidate;
+				}
+			}
+
+			return '';
 		}
 
 		private function build_string_key(array $item): string {

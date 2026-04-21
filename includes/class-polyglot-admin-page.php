@@ -362,6 +362,9 @@ if (!class_exists('Polyglot_Admin_Page')) {
 			?>
 			<div class="card" style="max-width: 900px; padding: 20px; margin-top: 16px;">
 				<h2><?php esc_html_e('Pages, Posts and CPT', 'polyglot'); ?></h2>
+				<p class="description" style="margin-top:0;">
+					<?php esc_html_e('Polyglot only translates items when both the source and target posts (or pages/CPT entries) already exist. Create the target-language items first, then run this translation process.', 'polyglot'); ?>
+				</p>
 				<form method="post" action="">
 					<?php wp_nonce_field('polyglot_form', 'polyglot_nonce'); ?>
 					<input type="hidden" name="polyglot_action" value="start_content_translation" />

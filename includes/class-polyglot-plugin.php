@@ -15,6 +15,9 @@ if (!class_exists('Polyglot_Plugin')) {
 
 		private const BATCH_SIZE = 25;
 		private const API_KEY_ENCRYPTION_PREFIX = 'polyglot_enc_v1:';
+		private const API_KEY_ENCRYPTION_PREFIX_V2 = 'polyglot_enc_v2:';
+		private const PROCESS_LOCK_TRANSIENT = 'polyglot_process_job_lock';
+		private const PROCESS_LOCK_TTL = 3;
 
 		private Polyglot_Translation_Service $translation_service;
 		private Polyglot_Admin_Page $admin_page;
@@ -268,49 +271,59 @@ if (!class_exists('Polyglot_Plugin')) {
 		}
 
 		public function process_job_batch(): void {
+			if (get_transient(self::PROCESS_LOCK_TRANSIENT)) {
+				return;
+			}
+			set_transient(self::PROCESS_LOCK_TRANSIENT, '1', self::PROCESS_LOCK_TTL);
+
 			$job = get_option(self::OPTION_JOB, array());
 			if (empty($job) || !is_array($job) || empty($job['queue']) || !is_array($job['queue'])) {
+				delete_transient(self::PROCESS_LOCK_TRANSIENT);
 				return;
 			}
 
-			$job['status'] = 'running';
-			$job['updated_at'] = time();
+			try {
+				$job['status'] = 'running';
+				$job['updated_at'] = time();
 
-			$api_key = $this->get_api_key();
-			if ($api_key === '') {
-				$job['status'] = 'failed';
-				$job['last_error'] = __('Missing Google API key.', 'polyglot');
+				$api_key = $this->get_api_key();
+				if ($api_key === '') {
+					$job['status'] = 'failed';
+					$job['last_error'] = __('Missing Google API key.', 'polyglot');
+					update_option(self::OPTION_JOB, $job, false);
+					return;
+				}
+
+				$job_type = isset($job['job_type']) ? (string) $job['job_type'] : 'strings';
+				$batch = array_splice($job['queue'], 0, self::BATCH_SIZE);
+				if ($job_type === 'content') {
+					$this->process_content_batch($job, $batch, $api_key);
+				} else {
+					$this->process_strings_batch($job, $batch, $api_key);
+				}
+
+				if (empty($job['queue'])) {
+					$job['status'] = empty($job['errors']) ? 'done' : 'done_with_errors';
+					$this->set_notice(
+						$job['status'] === 'done' ? 'success' : 'warning',
+						sprintf(
+							/* translators: 1: translated, 2: skipped, 3: failed */
+							__('Translation completed. Translated: %1$d, skipped: %2$d, failed: %3$d.', 'polyglot'),
+							(int) $job['totals']['translated'],
+							(int) $job['totals']['skipped'],
+							(int) $job['totals']['failed']
+						)
+					);
+				}
+
+				$job['updated_at'] = time();
 				update_option(self::OPTION_JOB, $job, false);
-				return;
-			}
 
-			$job_type = isset($job['job_type']) ? (string) $job['job_type'] : 'strings';
-			$batch = array_splice($job['queue'], 0, self::BATCH_SIZE);
-			if ($job_type === 'content') {
-				$this->process_content_batch($job, $batch, $api_key);
-			} else {
-				$this->process_strings_batch($job, $batch, $api_key);
-			}
-
-			if (empty($job['queue'])) {
-				$job['status'] = empty($job['errors']) ? 'done' : 'done_with_errors';
-				$this->set_notice(
-					$job['status'] === 'done' ? 'success' : 'warning',
-					sprintf(
-						/* translators: 1: translated, 2: skipped, 3: failed */
-						__('Translation completed. Translated: %1$d, skipped: %2$d, failed: %3$d.', 'polyglot'),
-						(int) $job['totals']['translated'],
-						(int) $job['totals']['skipped'],
-						(int) $job['totals']['failed']
-					)
-				);
-			}
-
-			$job['updated_at'] = time();
-			update_option(self::OPTION_JOB, $job, false);
-
-			if (!empty($job['queue']) && !wp_next_scheduled(self::CRON_HOOK)) {
-				wp_schedule_single_event(time() + 5, self::CRON_HOOK);
+				if (!empty($job['queue']) && !wp_next_scheduled(self::CRON_HOOK)) {
+					wp_schedule_single_event(time() + 5, self::CRON_HOOK);
+				}
+			} finally {
+				delete_transient(self::PROCESS_LOCK_TRANSIENT);
 			}
 		}
 
@@ -542,6 +555,10 @@ if (!class_exists('Polyglot_Plugin')) {
 			}
 
 			// Backward compatibility with previously stored plaintext keys.
+			$encrypted_plaintext = $this->encrypt_api_key($stored_value);
+			if ($encrypted_plaintext !== '') {
+				update_option(self::OPTION_API_KEY, $encrypted_plaintext, false);
+			}
 			return $stored_value;
 		}
 
@@ -566,10 +583,15 @@ if (!class_exists('Polyglot_Plugin')) {
 				return '';
 			}
 
-			return self::API_KEY_ENCRYPTION_PREFIX . base64_encode($iv . $ciphertext);
+			$mac = hash_hmac('sha256', $iv . $ciphertext, $key, true);
+			return self::API_KEY_ENCRYPTION_PREFIX_V2 . base64_encode($iv . $ciphertext . $mac);
 		}
 
 		private function decrypt_api_key(string $stored_value): ?string {
+			if (strpos($stored_value, self::API_KEY_ENCRYPTION_PREFIX_V2) === 0) {
+				return $this->decrypt_api_key_v2($stored_value);
+			}
+
 			if (strpos($stored_value, self::API_KEY_ENCRYPTION_PREFIX) !== 0) {
 				return null;
 			}
@@ -592,6 +614,39 @@ if (!class_exists('Polyglot_Plugin')) {
 			}
 
 			$key = hash('sha256', $key_material, true);
+			$plaintext = openssl_decrypt($ciphertext, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+			if (!is_string($plaintext)) {
+				return '';
+			}
+
+			return trim($plaintext);
+		}
+
+		private function decrypt_api_key_v2(string $stored_value): string {
+			if (!function_exists('openssl_decrypt')) {
+				return '';
+			}
+
+			$payload = substr($stored_value, strlen(self::API_KEY_ENCRYPTION_PREFIX_V2));
+			$decoded = base64_decode($payload, true);
+			if (!is_string($decoded) || strlen($decoded) <= 48) {
+				return '';
+			}
+
+			$iv = substr($decoded, 0, 16);
+			$mac = substr($decoded, -32);
+			$ciphertext = substr($decoded, 16, -32);
+			$key_material = wp_salt('auth');
+			if (!is_string($key_material) || $key_material === '') {
+				return '';
+			}
+
+			$key = hash('sha256', $key_material, true);
+			$expected_mac = hash_hmac('sha256', $iv . $ciphertext, $key, true);
+			if (!hash_equals($expected_mac, $mac)) {
+				return '';
+			}
+
 			$plaintext = openssl_decrypt($ciphertext, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
 			if (!is_string($plaintext)) {
 				return '';
