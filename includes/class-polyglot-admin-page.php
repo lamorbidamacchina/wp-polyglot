@@ -77,9 +77,13 @@ if (!class_exists('Polyglot_Admin_Page')) {
 			}
 
 			delete_option(Polyglot_Plugin::OPTION_NOTICE);
+			$logo_url = plugin_dir_url(POLYGLOT_FILE) . 'logo.png';
 			?>
 			<div class="wrap">
-				<h1><?php esc_html_e('Polyglot for Polylang', 'polyglot'); ?></h1>
+				<div style="display:flex; align-items:center; gap:12px; margin-bottom: 8px;">
+					<img src="<?php echo esc_url($logo_url); ?>" alt="<?php esc_attr_e('Polyglot logo', 'polyglot'); ?>" style="width: 42px; height: 42px; border-radius: 8px;" />
+					<h1 style="margin:0;"><?php esc_html_e('Polyglot for Polylang', 'polyglot'); ?></h1>
+				</div>
 				<?php if (!empty($notice['message'])) : ?>
 					<div class="notice notice-<?php echo esc_attr($notice['type'] ?? 'info'); ?> is-dismissible"><p><?php echo esc_html((string) $notice['message']); ?></p></div>
 				<?php endif; ?>
