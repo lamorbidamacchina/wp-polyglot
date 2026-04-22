@@ -28,11 +28,15 @@ This plugin is licensed under **GPL-2.0-or-later**.
 
 ### Configuration
 
+<img src="https://lamorbidamacchina.com/images/polyglot/screenshot_01.png" alt="Polyglot Configuration tab screenshot" width="760" />
+
 - Save Google API key in WordPress admin
 - API key is stored encrypted in WordPress options
 - Tabs are locked until an API key is configured
 
 ### Translation Strings Tab
+
+<img src="https://lamorbidamacchina.com/images/polyglot/screenshot_02.png" alt="Polyglot Translation Strings tab screenshot" width="760" />
 
 - Select Polylang string group
 - Select source and target languages
@@ -40,6 +44,8 @@ This plugin is licensed under **GPL-2.0-or-later**.
 - Background queue processing with live progress
 
 ### Pages, Posts and CPT Tab
+
+<img src="https://lamorbidamacchina.com/images/polyglot/screenshot_03.png" alt="Polyglot Pages, Posts and CPT tab screenshot" width="760" />
 
 - Select one content type (`page`, `post`, or one public CPT)
 - Select source and target languages
