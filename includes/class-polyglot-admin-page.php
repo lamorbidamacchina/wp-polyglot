@@ -520,15 +520,19 @@ if (!class_exists('Polyglot_Admin_Page')) {
 				$parts[] = $message;
 
 				if ($name !== '') {
+					/* translators: %s: Polylang string name. */
 					$parts[] = sprintf(__('name: %s', 'polyglot-for-polylang'), $name);
 				}
 				if ($field_key !== '') {
+					/* translators: %s: Content field key. */
 					$parts[] = sprintf(__('field: %s', 'polyglot-for-polylang'), $field_key);
 				}
 				if ($language !== '') {
+					/* translators: %s: Target language slug. */
 					$parts[] = sprintf(__('lang: %s', 'polyglot-for-polylang'), $language);
 				}
 				if ($source_post_id > 0 || $target_post_id > 0) {
+					/* translators: 1: Source post ID, 2: Target post ID. */
 					$parts[] = sprintf(__('source/target: %1$d/%2$d', 'polyglot-for-polylang'), $source_post_id, $target_post_id);
 				}
 

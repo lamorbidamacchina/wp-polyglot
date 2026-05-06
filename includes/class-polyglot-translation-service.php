@@ -568,7 +568,7 @@ if (!class_exists('Polyglot_Translation_Service')) {
 					$table_name
 				);
 
-				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Identifiers are strict allowlisted/validated from table schema.
+				// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,PluginCheck.Security.DirectDB.UnescapedDBParameter -- Identifiers are strict allowlisted/validated from table schema.
 				$rows = $wpdb->get_results($query, ARRAY_A);
 				if (!is_array($rows) || empty($rows)) {
 					continue;
