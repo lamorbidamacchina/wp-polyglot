@@ -23,24 +23,24 @@ function polyglot_delete_site_options(): void {
 }
 
 if (is_multisite()) {
-	$site_ids = get_sites(
+	$polyglot_site_ids = get_sites(
 		array(
 			'fields' => 'ids',
 			'number' => 0,
 		)
 	);
 
-	if (is_array($site_ids)) {
-		$original_blog_id = get_current_blog_id();
+	if (is_array($polyglot_site_ids)) {
+		$polyglot_original_blog_id = get_current_blog_id();
 
-		foreach ($site_ids as $site_id) {
-			switch_to_blog((int) $site_id);
+		foreach ($polyglot_site_ids as $polyglot_site_id) {
+			switch_to_blog((int) $polyglot_site_id);
 			polyglot_delete_site_options();
 			restore_current_blog();
 		}
 
-		if (get_current_blog_id() !== $original_blog_id) {
-			switch_to_blog($original_blog_id);
+		if (get_current_blog_id() !== $polyglot_original_blog_id) {
+			switch_to_blog($polyglot_original_blog_id);
 		}
 	}
 } else {

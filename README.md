@@ -170,7 +170,7 @@ For security, restrict the API key in Google Cloud:
 
 ## Changelog
 
-### 1.3.0
+### 1.3.1
 
 - Renamed text domain from `polyglot` to `polyglot-for-polylang` to match the WordPress.org plugin slug
 - Moved inline admin scripts to dedicated JS files enqueued via `wp_enqueue_script()`

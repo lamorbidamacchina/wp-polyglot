@@ -4,7 +4,7 @@ Tags: polylang, translation, localization, google translate, multilingual
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -180,7 +180,7 @@ For security, restrict the API key in Google Cloud:
 
 == Changelog ==
 
-= 1.3.0 =
+= 1.3.1 =
 
 - Renamed text domain from `polyglot` to `polyglot-for-polylang` to match the plugin slug
 - Moved inline admin scripts to dedicated JS files enqueued via wp_enqueue_script()
