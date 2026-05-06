@@ -1,10 +1,10 @@
 === Polyglot for Polylang ===
-Contributors: Simone Ricci
+Contributors: simogol
 Tags: polylang, translation, localization, google translate, multilingual
 Requires at least: 5.8
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -115,6 +115,28 @@ Polyglot is provided as is, without any warranty of any kind.
 - Translation jobs can modify content and custom fields; review your settings and previews carefully before starting.
 - The plugin author is not liable for data loss, site issues, translation quality issues, or other damages resulting from use.
 
+== External services ==
+
+This plugin relies on Google Cloud Translation API (Basic v2) to perform automated translations. The service is the only third-party endpoint contacted by the plugin.
+
+What it is used for:
+
+- Translating Polylang String Translation entries on demand.
+- Translating post/page/CPT title, content, excerpt, and (when explicitly enabled) selected custom field values on demand.
+- Validating the saved API key by calling the languages list endpoint when the administrator clicks "Test Saved API Key".
+
+What data is sent and when:
+
+- Each translation request sends the source text, the source language code, and the target language code to https://translation.googleapis.com/language/translate/v2 along with the configured API key in the request URL. Requests are made only while a translation job is processing or when the administrator clicks "Test Saved API Key".
+- The validation request sends only the API key to https://translation.googleapis.com/language/translate/v2/languages.
+- No personal data, user identifiers, IP addresses, or site visitor data are sent by the plugin. Standard HTTP request metadata (such as referrer set to the site URL) is included so the API key can be restricted by HTTP referrer in Google Cloud.
+
+Service provider: Google LLC. By using this plugin you agree to Google Cloud's terms.
+
+- Google Cloud Terms of Service: https://cloud.google.com/terms
+- Google Privacy Policy: https://policies.google.com/privacy
+- Google Cloud Translation documentation: https://cloud.google.com/translate/docs
+
 == Installation ==
 
 1. Upload the plugin folder to `/wp-content/plugins/`
@@ -157,6 +179,13 @@ For security, restrict the API key in Google Cloud:
 - Application restrictions: limit usage to your required domains/referrers (or server IPs, based on your setup).
 
 == Changelog ==
+
+= 1.3.0 =
+
+- Renamed text domain from `polyglot` to `polyglot-for-polylang` to match the plugin slug
+- Moved inline admin scripts to dedicated JS files enqueued via wp_enqueue_script()
+- Added External services section documenting Google Cloud Translation API usage, terms of service, and privacy policy links
+- Updated Contributors metadata to use the WordPress.org username
 
 = 1.2.0 =
 

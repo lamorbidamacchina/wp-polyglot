@@ -170,6 +170,13 @@ For security, restrict the API key in Google Cloud:
 
 ## Changelog
 
+### 1.3.0
+
+- Renamed text domain from `polyglot` to `polyglot-for-polylang` to match the WordPress.org plugin slug
+- Moved inline admin scripts to dedicated JS files enqueued via `wp_enqueue_script()`
+- Documented Google Cloud Translation API in readme.txt (External services, terms, privacy)
+- Updated Contributors metadata to use the WordPress.org username
+
 ### 1.2.0
 
 - Added uninstall cleanup to remove plugin options, including stored encrypted Google API key, job state, and admin notice data

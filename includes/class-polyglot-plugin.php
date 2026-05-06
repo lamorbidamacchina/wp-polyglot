@@ -58,8 +58,8 @@ if (!class_exists('Polyglot_Plugin')) {
 			deactivate_plugins(plugin_basename(POLYGLOT_FILE));
 
 			wp_die(
-				esc_html__('Polyglot requires Polylang to be installed and active before activation.', 'polyglot'),
-				esc_html__('Plugin dependency missing', 'polyglot'),
+				esc_html__('Polyglot requires Polylang to be installed and active before activation.', 'polyglot-for-polylang'),
+				esc_html__('Plugin dependency missing', 'polyglot-for-polylang'),
 				array(
 					'response' => 200,
 					'back_link' => true,
@@ -73,8 +73,8 @@ if (!class_exists('Polyglot_Plugin')) {
 
 		public function register_admin_page(): void {
 			add_management_page(
-				__('Polyglot for Polylang', 'polyglot'),
-				__('Polyglot for Polylang', 'polyglot'),
+				__('Polyglot for Polylang', 'polyglot-for-polylang'),
+				__('Polyglot for Polylang', 'polyglot-for-polylang'),
 				'manage_options',
 				self::MENU_SLUG,
 				array($this->admin_page, 'render')
@@ -88,7 +88,7 @@ if (!class_exists('Polyglot_Plugin')) {
 
 			?>
 			<div class="notice notice-error">
-				<p><?php esc_html_e('Polyglot requires Polylang. Please install and activate Polylang first.', 'polyglot'); ?></p>
+				<p><?php esc_html_e('Polyglot requires Polylang. Please install and activate Polylang first.', 'polyglot-for-polylang'); ?></p>
 			</div>
 			<?php
 		}
@@ -131,35 +131,35 @@ if (!class_exists('Polyglot_Plugin')) {
 			$api_key = preg_replace('/\s+/', '', $api_key);
 			if ($api_key === '') {
 				update_option(self::OPTION_API_KEY, '', false);
-				$this->set_notice('success', __('API key cleared.', 'polyglot'));
+				$this->set_notice('success', __('API key cleared.', 'polyglot-for-polylang'));
 				$this->redirect_to_page($tab);
 			}
 
 			if (!$this->is_likely_google_api_key($api_key)) {
-				$this->set_notice('error', __('The API key format looks invalid. Paste the full Google API key (usually starts with "AIza").', 'polyglot'));
+				$this->set_notice('error', __('The API key format looks invalid. Paste the full Google API key (usually starts with "AIza").', 'polyglot-for-polylang'));
 				$this->redirect_to_page($tab);
 			}
 
 			$encrypted_key = $this->encrypt_api_key($api_key);
 			if ($encrypted_key === '') {
-				$this->set_notice('error', __('Could not securely store the API key on this server.', 'polyglot'));
+				$this->set_notice('error', __('Could not securely store the API key on this server.', 'polyglot-for-polylang'));
 				$this->redirect_to_page($tab);
 			}
 
 			update_option(self::OPTION_API_KEY, $encrypted_key, false);
-			$this->set_notice('success', __('API key saved.', 'polyglot'));
+			$this->set_notice('success', __('API key saved.', 'polyglot-for-polylang'));
 			$this->redirect_to_page($tab);
 		}
 
 		private function start_translation_job(string $tab): void {
 			if (!$this->translation_service->is_polylang_ready()) {
-				$this->set_notice('error', __('Polylang is not active or does not expose required APIs.', 'polyglot'));
+				$this->set_notice('error', __('Polylang is not active or does not expose required APIs.', 'polyglot-for-polylang'));
 				$this->redirect_to_page($tab);
 			}
 
 			$api_key = $this->get_api_key();
 			if ($api_key === '') {
-				$this->set_notice('error', __('Please save a Google API key first.', 'polyglot'));
+				$this->set_notice('error', __('Please save a Google API key first.', 'polyglot-for-polylang'));
 				$this->redirect_to_page($tab);
 			}
 
@@ -171,13 +171,13 @@ if (!class_exists('Polyglot_Plugin')) {
 			$target_languages = array_values(array_unique(array_diff($target_languages, array($source_language))));
 
 			if ($group === '' || $source_language === '' || empty($target_languages)) {
-				$this->set_notice('error', __('Select a group, source language, and at least one target language.', 'polyglot'));
+				$this->set_notice('error', __('Select a group, source language, and at least one target language.', 'polyglot-for-polylang'));
 				$this->redirect_to_page($tab);
 			}
 
 			$queue = $this->translation_service->build_queue($group, $source_language, $target_languages);
 			if (empty($queue)) {
-				$this->set_notice('success', __('No missing translations found for the selected group/languages.', 'polyglot'));
+				$this->set_notice('success', __('No missing translations found for the selected group/languages.', 'polyglot-for-polylang'));
 				$this->redirect_to_page($tab);
 			}
 
@@ -200,18 +200,18 @@ if (!class_exists('Polyglot_Plugin')) {
 				'last_error' => '',
 			);
 
-			$this->queue_job_and_redirect($job, $tab, __('Translation job queued. Processing will continue in background.', 'polyglot'));
+			$this->queue_job_and_redirect($job, $tab, __('Translation job queued. Processing will continue in background.', 'polyglot-for-polylang'));
 		}
 
 		private function test_api_key(string $tab): void {
 			$api_key = $this->get_api_key();
 			if ($api_key === '') {
-				$this->set_notice('error', __('No API key is saved. Save a key first, then run the test.', 'polyglot'));
+				$this->set_notice('error', __('No API key is saved. Save a key first, then run the test.', 'polyglot-for-polylang'));
 				$this->redirect_to_page($tab);
 			}
 
 			if (!$this->is_likely_google_api_key($api_key)) {
-				$this->set_notice('error', __('Stored API key format is invalid. Re-save the key in Configuration and test again.', 'polyglot'));
+				$this->set_notice('error', __('Stored API key format is invalid. Re-save the key in Configuration and test again.', 'polyglot-for-polylang'));
 				$this->redirect_to_page($tab);
 			}
 
@@ -221,26 +221,26 @@ if (!class_exists('Polyglot_Plugin')) {
 					'error',
 					sprintf(
 						/* translators: %s: provider error message */
-						__('API key test failed: %s', 'polyglot'),
+						__('API key test failed: %s', 'polyglot-for-polylang'),
 						$check->get_error_message()
 					)
 				);
 				$this->redirect_to_page($tab);
 			}
 
-			$this->set_notice('success', __('API key test passed. Google Cloud Translation API is reachable with the current saved key.', 'polyglot'));
+			$this->set_notice('success', __('API key test passed. Google Cloud Translation API is reachable with the current saved key.', 'polyglot-for-polylang'));
 			$this->redirect_to_page($tab);
 		}
 
 		private function start_content_translation_job(string $tab): void {
 			if (!$this->translation_service->is_polylang_ready()) {
-				$this->set_notice('error', __('Polylang is not active or does not expose required APIs.', 'polyglot'));
+				$this->set_notice('error', __('Polylang is not active or does not expose required APIs.', 'polyglot-for-polylang'));
 				$this->redirect_to_page($tab);
 			}
 
 			$api_key = $this->get_api_key();
 			if ($api_key === '') {
-				$this->set_notice('error', __('Please save a Google API key first.', 'polyglot'));
+				$this->set_notice('error', __('Please save a Google API key first.', 'polyglot-for-polylang'));
 				$this->redirect_to_page($tab);
 			}
 
@@ -256,7 +256,7 @@ if (!class_exists('Polyglot_Plugin')) {
 			$is_valid_content_type = isset($allowed_content_types[$content_type]);
 			$include_custom_fields = $content_scope === 'with_custom_fields';
 			if (!in_array($content_scope, array('default_only', 'with_custom_fields'), true) || !$is_valid_content_type || $source_language === '' || empty($target_languages)) {
-				$this->set_notice('error', __('Select a valid content type, source language, and at least one target language.', 'polyglot'));
+				$this->set_notice('error', __('Select a valid content type, source language, and at least one target language.', 'polyglot-for-polylang'));
 				$this->redirect_to_page($tab);
 			}
 
@@ -268,7 +268,7 @@ if (!class_exists('Polyglot_Plugin')) {
 			$confirm_meta_translation = isset($_POST['polyglot_confirm_meta_translation']) ? sanitize_key((string) wp_unslash($_POST['polyglot_confirm_meta_translation'])) : '';
 
 			if (empty($queue)) {
-				$this->set_notice('success', __('No eligible content fields found for the selected content type/languages.', 'polyglot'));
+				$this->set_notice('success', __('No eligible content fields found for the selected content type/languages.', 'polyglot-for-polylang'));
 				$this->redirect_to_page($tab);
 			}
 
@@ -277,8 +277,8 @@ if (!class_exists('Polyglot_Plugin')) {
 					'warning',
 					sprintf(
 						/* translators: %s: comma-separated meta keys */
-						__('Custom fields selected for translation: %s. Review and confirm by checking the custom field confirmation box, then start again.', 'polyglot'),
-						!empty($meta_keys) ? implode(', ', $meta_keys) : __('none detected for this selection', 'polyglot')
+						__('Custom fields selected for translation: %s. Review and confirm by checking the custom field confirmation box, then start again.', 'polyglot-for-polylang'),
+						!empty($meta_keys) ? implode(', ', $meta_keys) : __('none detected for this selection', 'polyglot-for-polylang')
 					)
 				);
 				$this->redirect_to_page($tab);
@@ -304,7 +304,7 @@ if (!class_exists('Polyglot_Plugin')) {
 				'last_error' => '',
 			);
 
-			$this->queue_job_and_redirect($job, $tab, __('Content translation job queued. Processing will continue in background.', 'polyglot'));
+			$this->queue_job_and_redirect($job, $tab, __('Content translation job queued. Processing will continue in background.', 'polyglot-for-polylang'));
 		}
 
 		public function process_job_batch(): void {
@@ -326,13 +326,13 @@ if (!class_exists('Polyglot_Plugin')) {
 				$api_key = $this->get_api_key();
 				if ($api_key === '') {
 					$job['status'] = 'failed';
-					$job['last_error'] = __('Missing Google API key.', 'polyglot');
+					$job['last_error'] = __('Missing Google API key.', 'polyglot-for-polylang');
 					update_option(self::OPTION_JOB, $job, false);
 					return;
 				}
 				if (!$this->is_likely_google_api_key($api_key)) {
 					$job['status'] = 'failed';
-					$job['last_error'] = __('Stored Google API key could not be validated. Re-save the API key in the Configuration tab (this can happen after site migrations or auth salt changes).', 'polyglot');
+					$job['last_error'] = __('Stored Google API key could not be validated. Re-save the API key in the Configuration tab (this can happen after site migrations or auth salt changes).', 'polyglot-for-polylang');
 					update_option(self::OPTION_JOB, $job, false);
 					return;
 				}
@@ -351,7 +351,7 @@ if (!class_exists('Polyglot_Plugin')) {
 						$job['status'] === 'done' ? 'success' : 'warning',
 						sprintf(
 							/* translators: 1: translated, 2: skipped, 3: failed */
-							__('Translation completed. Translated: %1$d, skipped: %2$d, failed: %3$d.', 'polyglot'),
+							__('Translation completed. Translated: %1$d, skipped: %2$d, failed: %3$d.', 'polyglot-for-polylang'),
 							(int) $job['totals']['translated'],
 							(int) $job['totals']['skipped'],
 							(int) $job['totals']['failed']
@@ -463,11 +463,11 @@ if (!class_exists('Polyglot_Plugin')) {
 					$job['totals']['failed']++;
 					$save_error = $this->translation_service->get_last_save_error();
 					if ($save_error === '') {
-						$save_error = __('Unknown save error.', 'polyglot');
+						$save_error = __('Unknown save error.', 'polyglot-for-polylang');
 					}
 					$job['last_error'] = sprintf(
 						/* translators: 1: string name, 2: language slug, 3: save error detail */
-						__('Could not save translation for "%1$s" in language "%2$s". Details: %3$s', 'polyglot'),
+						__('Could not save translation for "%1$s" in language "%2$s". Details: %3$s', 'polyglot-for-polylang'),
 						(string) $task['name'],
 						(string) $task['target_language'],
 						$save_error
@@ -511,7 +511,7 @@ if (!class_exists('Polyglot_Plugin')) {
 				$job['totals']['failed']++;
 				$save_error = $this->translation_service->get_last_save_error();
 				if ($save_error === '') {
-					$save_error = __('Unknown save error.', 'polyglot');
+					$save_error = __('Unknown save error.', 'polyglot-for-polylang');
 				}
 				$job['errors'][] = array(
 					'source_post_id' => (int) ($task['source_post_id'] ?? 0),
@@ -554,7 +554,7 @@ if (!class_exists('Polyglot_Plugin')) {
 
 		public function ajax_content_meta_preview(): void {
 			if (!current_user_can('manage_options')) {
-				wp_send_json_error(array('message' => __('Unauthorized.', 'polyglot')), 403);
+				wp_send_json_error(array('message' => __('Unauthorized.', 'polyglot-for-polylang')), 403);
 			}
 
 			check_ajax_referer('polyglot_status', 'nonce');

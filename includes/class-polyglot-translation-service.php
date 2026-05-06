@@ -99,7 +99,7 @@ if (!class_exists('Polyglot_Translation_Service')) {
 			$data = json_decode($body, true);
 
 			if ($status_code >= 400) {
-				$message = isset($data['error']['message']) ? (string) $data['error']['message'] : __('Google Translate request failed.', 'polyglot');
+				$message = isset($data['error']['message']) ? (string) $data['error']['message'] : __('Google Translate request failed.', 'polyglot-for-polylang');
 				return new WP_Error('google_api_error', $message);
 			}
 
@@ -110,7 +110,7 @@ if (!class_exists('Polyglot_Translation_Service')) {
 		public function validate_api_key(string $api_key) {
 			$api_key = trim($api_key);
 			if ($api_key === '') {
-				return new WP_Error('missing_api_key', __('Missing API key.', 'polyglot'));
+				return new WP_Error('missing_api_key', __('Missing API key.', 'polyglot-for-polylang'));
 			}
 
 			$endpoint = add_query_arg(
@@ -138,13 +138,13 @@ if (!class_exists('Polyglot_Translation_Service')) {
 			$data = json_decode($body, true);
 
 			if ($status_code >= 400) {
-				$message = isset($data['error']['message']) ? (string) $data['error']['message'] : __('Google API key validation failed.', 'polyglot');
+				$message = isset($data['error']['message']) ? (string) $data['error']['message'] : __('Google API key validation failed.', 'polyglot-for-polylang');
 				return new WP_Error('google_api_key_validation_failed', $message);
 			}
 
 			$languages = isset($data['data']['languages']) && is_array($data['data']['languages']) ? $data['data']['languages'] : array();
 			if (empty($languages)) {
-				return new WP_Error('google_api_key_validation_unexpected_response', __('Google API key validation returned an unexpected response.', 'polyglot'));
+				return new WP_Error('google_api_key_validation_unexpected_response', __('Google API key validation returned an unexpected response.', 'polyglot-for-polylang'));
 			}
 
 			return true;
@@ -187,7 +187,7 @@ if (!class_exists('Polyglot_Translation_Service')) {
 			foreach ($all_strings as $string_data) {
 				$context = isset($string_data['context']) ? trim((string) $string_data['context']) : '';
 				if ($context === '') {
-					$context = __('Default', 'polyglot');
+					$context = __('Default', 'polyglot-for-polylang');
 				}
 				$groups[$context] = $context;
 			}
@@ -345,7 +345,7 @@ if (!class_exists('Polyglot_Translation_Service')) {
 			foreach ($all_strings as $string_data) {
 				$context = isset($string_data['context']) ? trim((string) $string_data['context']) : '';
 				if ($context === '') {
-					$context = __('Default', 'polyglot');
+					$context = __('Default', 'polyglot-for-polylang');
 				}
 				if ($context !== $group) {
 					continue;
