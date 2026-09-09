@@ -1,10 +1,10 @@
 === Polyglot for Polylang ===
 Contributors: simogol
 Tags: polylang, translation, localization, google translate, multilingual
-Requires at least: 5.8
-Tested up to: 6.9
+Requires at least: 5.9
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 
@@ -179,6 +179,11 @@ For security, restrict the API key in Google Cloud:
 - Application restrictions: limit usage to your required domains/referrers (or server IPs, based on your setup).
 
 == Changelog ==
+
+= 1.3.2 =
+
+- Confirmed compatibility with WordPress 7.1
+- Raised minimum WordPress version to 5.9, which is required for the `str_starts_with()` polyfill used in custom field detection
 
 = 1.3.1 =
 
